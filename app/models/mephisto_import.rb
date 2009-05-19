@@ -1,6 +1,7 @@
 class MephistoImport
  
- 
+  @@errors = Hash.new
+
   class << self
     attr_accessor :errors
     attr_accessor :users
@@ -32,7 +33,7 @@ class MephistoImport
     end
     
     @published = MephistoArticle.find_all_published
-    @parent    = Page.find_by_title('Articles')
+    @parent    = Page.find_by_title('Blog')
     for article in @published
       page = article.to_page
       for c in article.comments
@@ -42,7 +43,13 @@ class MephistoImport
       page.parent = @parent
       if page.save
         pages << page.id
+        tags = [article.section_names].join(',').gsub(/\s+/,'').split(',').collect{|i| i.downcase.gsub(/[^a-zA-Z0-9]/, '')}.uniq.compact.reject{|i| i == 'home'}.join(' ')
+        puts tags
+        page.meta_tags = tags
       else
+        puts page.errors.full_messages
+        puts page.parts[0].filter
+        puts page.parts[0].errors.full_messages
         @@errors[page] = page.errors 
       end
     end
