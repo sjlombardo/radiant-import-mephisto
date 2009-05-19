@@ -8,7 +8,7 @@ class MephistoArticle < ActiveRecord::Base
   
              
   has_many :tags, :class_name => 'MephistoTag', 
-           :finder_sql => 'SELECT tags.* FROM tags  INNER JOIN taggings ON tags.id = taggings.tag_id   WHERE ((taggings.taggable_id = #{id}) AND (taggable_type="Content"))'
+           :finder_sql => 'SELECT tags.* FROM tags  INNER JOIN taggings ON tags.id = taggings.tag_id   WHERE ((taggings.taggable_id = #{id}) AND (taggable_type=\'Content\'))'
 
   has_many :sections, :class_name => 'MephistoSection', 
         :finder_sql => 'SELECT sections.* FROM sections  INNER JOIN assigned_sections ON sections.id = assigned_sections.section_id WHERE ((assigned_sections.article_id = #{id}))' 
@@ -44,13 +44,14 @@ class MephistoArticle < ActiveRecord::Base
       :created_by_id   => MephistoUser.id_mappings[user_id],
       :updated_by_id   => MephistoUser.id_mappings[updater_id]
     )
-    filter_name = filter.gsub('_filter','').camelcase
+    filter_name = filter.gsub('_filter','').gsub(/\s+/,'').camelcase
+    filter_name = (filter_name.nil? or filter_name =~ /(^$|Textile|Markdown)/) ? filter_name : 'Textile'
     page.parts << PagePart.new(:name => 'body',  :filter_id =>  filter_name, :content => body )
     page
   end
 
   def self.find_all_published
-    find(:all, :conditions => "published_at != ''")
+    find(:all, :conditions => "published_at IS NOT NULL")
   end
 
 end
